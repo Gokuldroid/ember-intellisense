@@ -1,6 +1,6 @@
 # ember-intellisense README
 
-This is the README for your extension "ember-intellisense". After writing up a brief description, we recommend including the following sections.
+Basic autocompletion for 'ember' projects 
 
 ## Features
 
