@@ -1,9 +1,9 @@
-import { CompletionItemProvider, CompletionItemKind, TextDocument, Position, CompletionItem, ExtensionContext, languages } from "vscode";
-import { getFileState } from "./state/file";
 import { findRelatedFiles } from 'ember-find-related-files';
-import { getCurrentWorkspaceFolder, currentDocumentFolder, currentDocumentRelativePath } from "./utils/editor";
-import * as path from 'path';
 import * as _ from 'lodash';
+import * as path from 'path';
+import { CompletionItem, CompletionItemProvider, ExtensionContext, languages, Position, TextDocument } from "vscode";
+import { getFileState } from "./state/file";
+import { currentDocumentRelativePath, getCurrentWorkspaceFolder } from "./utils/editor";
 import { getCompletionItems } from './utils/jsParser';
 
 class HbsAutocompleteProvider implements CompletionItemProvider {

@@ -1,4 +1,4 @@
-import { TextDocument, Position, workspace } from "vscode";
+import { TextDocument, Position } from "vscode";
 import { dirname } from 'path';
 import { WorkspaceState } from "./state/workspace";
 
