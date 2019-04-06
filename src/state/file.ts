@@ -25,10 +25,12 @@ export class FileState {
   }
 
   matchCurrentWord(pattern: string) {
-    return this.currentWord().match(pattern);
+    let currentWord = this.currentWord();
+    return currentWord.match(pattern);
   }
 
   currentWord(): string {
+    //TODO : doesn't work as expected
     let range = this.document.getWordRangeAtPosition(this.position);
     return this.document.getText(range);
   }

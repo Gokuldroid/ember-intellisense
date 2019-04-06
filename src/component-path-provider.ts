@@ -3,6 +3,9 @@ import * as globObject from 'glob';
 import { getFileState } from "./state/file";
 import * as Queue from "queue-promise";
 import { getCurrentWorkspaceFolder } from "./utils/editor";
+import * as path from 'path';
+import * as _ from 'lodash';
+import { getTask } from "./utils/single-task";
 
 
 const glob = function (pattern: string, options: Object) {
@@ -24,49 +27,41 @@ class ComponentPathProvider implements CompletionItemProvider {
   provideCompletionItems(document: TextDocument, position: Position): CompletionItem[] {
     let fileState = getFileState(document, position);
     let folder = getCurrentWorkspaceFolder()!!;
-    if (fileState.matchCurrentWord("\{{2,2}[a-z]{2,6}") || fileState.matchCurrentWord("\{{2,2}\/")) {
-      return cache.get(folder + '/app/components') || (queue.refreshCache());
+    if (fileState.matchCurrentLine("\{{2,2}[a-z]{3,6}") || fileState.matchCurrentLine("\{{2,2}\/")) {
+      return cache.get(folder) || (queue.refreshCache());
     }
     return [];
   }
 }
 
-let cache: Map<string,CompletionItem[]> = new Map();
+let cache: Map<string, CompletionItem[]> = new Map();
 
 async function refreshCompletionItems() {
   let currentFolder = getCurrentWorkspaceFolder();
-  if(!currentFolder) {
+  if (!currentFolder) {
     return;
   }
-  currentFolder = currentFolder + '/app/components';
-  let files = await glob('**/*.hbs', { cwd: currentFolder });
-  let items = files.map((file) => {
-    return toCompletionItem(file.replace('/template.hbs', ''));
+  let podTemplatesFolder = path.join(currentFolder, 'app', 'components');
+  let podFiles = await glob('**/*.hbs', { cwd: podTemplatesFolder });
+  let templatesFolder = path.join(currentFolder, 'app', 'templates');
+  let templateFiles = await glob('**/*.hbs', { cwd: templatesFolder });
+  let allTemplateFiles = [...podFiles, ...templateFiles];
+  let items = _.uniq(allTemplateFiles).map((file: string) => {
+    return toCompletionItem(file.replace('/template.hbs', '').replace('.hbs', ''));
   });
   console.log(`cache refreshed :: ${currentFolder} , size:: ${items.length}`);
   cache.set(currentFolder, items);
 }
 
 
-const queue = new Queue({
-  concurrent: 1,
-  interval: 5000,
-});
-
-queue.refreshCache = function () {
-  if (!this.isEmpty) {
-    return;
-  }
-  this.enqueue(refreshCompletionItems);
-  return [];
-};
+const queue = getTask(refreshCompletionItems);
 
 function registerFileWatcher(context: ExtensionContext) {
-  queue.refreshCache();
+  queue.performTask();
   let fileSystemWatcher = workspace.createFileSystemWatcher(`${getCurrentWorkspaceFolder()}/**/*.hbs`);
   fileSystemWatcher.onDidChange((filePath) => {
     console.log('file changed ::' + filePath);
-    queue.refreshCache();
+    queue.performTask();
   });
   context.subscriptions.push(fileSystemWatcher);
 }

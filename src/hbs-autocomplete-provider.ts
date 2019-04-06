@@ -4,7 +4,7 @@ import * as path from 'path';
 import { CompletionItem, CompletionItemProvider, ExtensionContext, languages, Position, TextDocument } from "vscode";
 import { getFileState } from "./state/file";
 import { currentDocumentRelativePath, getCurrentWorkspaceFolder } from "./utils/editor";
-import { getCompletionItems } from './utils/jsParser';
+import { getCompletionItems } from './utils/js-parser';
 
 class HbsAutocompleteProvider implements CompletionItemProvider {
   provideCompletionItems(document: TextDocument, position: Position): CompletionItem[] {
@@ -15,10 +15,7 @@ class HbsAutocompleteProvider implements CompletionItemProvider {
       let relatedFiles = findRelatedFiles(currentFolder, currentFilePath).filter((file: any) => {
         return file.label === 'Component' || file.label === 'Controller';
       }).map((file: any) => file.path);
-      var items = relatedFiles.map((file: string) => getCompletionItems(path.join(currentFolder!!, file)));
-      items = _.flattenDeep(items);
-      console.log(items);
-      return items;
+      return _.flatten(relatedFiles.map((file: string) => getCompletionItems(path.join(currentFolder!!, file))));
     }
     return [];
   }
