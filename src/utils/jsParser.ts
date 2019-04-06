@@ -24,7 +24,7 @@ export function getCompletionItems(file: string): vscode.CompletionItem[] {
   let ast = parseJs(file);
   let items: vscode.CompletionItem[] = [];
   traverse(ast, {
-    enter(path){
+    enter(path: any){
       let node = path.node;
       if(types.isProperty(node)){
         items.push(toCompletionItem(node.key.name));
