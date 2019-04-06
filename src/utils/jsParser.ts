@@ -1,4 +1,3 @@
-import { fstat } from "fs";
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as parser from '@babel/parser';
