@@ -24,7 +24,7 @@ class ComponentPathProvider implements CompletionItemProvider {
   provideCompletionItems(document: TextDocument, position: Position): CompletionItem[] {
     let fileState = getFileState(document, position);
     let folder = getCurrentWorkspaceFolder()!!;
-    if (fileState.matchCurrentWord("\{{2,2}[a-z]+") || fileState.matchCurrentWord("\{{2,2}\/")) {
+    if (fileState.matchCurrentWord("\{{2,2}[a-z]{2,6}") || fileState.matchCurrentWord("\{{2,2}\/")) {
       return cache.get(folder + '/app/components') || (queue.refreshCache());
     }
     return [];

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-
+import * as path from 'path';
 
 export function currentDocument(): vscode.TextDocument | null {
   let activeEditor = vscode.window.activeTextEditor;
@@ -10,11 +10,19 @@ export function currentDocument(): vscode.TextDocument | null {
 }
 
 
-export function currentDocumentRelativePath():string | null{
-  if(currentDocument()){
+export function currentDocumentRelativePath(): string | null {
+  if (currentDocument()) {
     return vscode.workspace.asRelativePath(currentDocument()!.uri);
   }
   return null;
+}
+
+export function currentDocumentFolder(): string | null {
+  let doc = currentDocument();
+  if (!doc) {
+    return null;
+  }
+  return path.dirname(vscode.workspace.asRelativePath(doc.fileName, false));
 }
 
 
