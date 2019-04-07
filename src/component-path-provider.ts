@@ -7,18 +7,7 @@ import { getTask } from "./utils/single-task";
 import glob from "./utils/glob";
 import * as fs from "fs";
 
-class ComponentPathProvider implements CompletionItemProvider {
-  provideCompletionItems(document: TextDocument, position: Position): CompletionItem[] {
-    let fileState = getFileState(document, position);
-    let folder = getCurrentWorkspaceFolder()!!;
-    if (fileState.matchCurrentLine("\{{2,2}[a-z]{3,6}") || fileState.matchCurrentLine("\{{2,2}\/") || fileState.matchCurrentLine("\{{2,2}\#")) {
-      return [...completionCache.get(folder) || refreshCompletionsTask.performTask(), ...addonsCompletionCache.get(folder) || []];
-    }
-    return [];
-  }
-}
-
-let completionCache: Map<string, CompletionItem[]> = new Map();
+let completionCache: Map<string, string[]> = new Map();
 
 async function getTemplateFiles(folder: string): Promise<string[]> {
   //normal app templates
@@ -45,16 +34,13 @@ async function refreshCompletionItems() {
     return;
   }
   let allTemplateFiles = await getTemplateFiles(currentFolder);
-  let items = allTemplateFiles.map((file: string) => {
-    return new CompletionItem(file, CompletionItemKind.Module);
-  });
-  console.log(`completionCache refreshed :: ${currentFolder} , size:: ${items.length}`);
-  completionCache.set(currentFolder, items);
+  console.log(`completionCache refreshed :: ${currentFolder} , size:: ${allTemplateFiles.length}`);
+  completionCache.set(currentFolder, allTemplateFiles);
 }
 
 const refreshCompletionsTask = getTask(refreshCompletionItems);
 
-let addonsCompletionCache: Map<string, CompletionItem[]> = new Map();
+let addonsCompletionCache: Map<string, string[]> = new Map();
 
 async function refreshAddonCompletionItems() {
   let currentFolder = getCurrentWorkspaceFolder();
@@ -73,13 +59,42 @@ async function refreshAddonCompletionItems() {
     let templates = await getTemplateFiles(path.join(currentFolder!!, 'node_modules', key));
     addonTempates = [...addonTempates, ...templates];
   }
+  console.log(`addon completionCache refreshed :: ${currentFolder} , size:: ${addonTempates.length}`);
+  addonsCompletionCache.set(currentFolder, addonTempates);
+}
 
-  let items = addonTempates.map((file: string) => {
-    let completionItem = new CompletionItem(file, CompletionItemKind.Module);
-    return completionItem;
-  });
-  console.log(`addon completionCache refreshed :: ${currentFolder} , size:: ${items.length}`);
-  addonsCompletionCache.set(currentFolder, items);
+
+function toCompletionItems(currentWord:string, folder:string): CompletionItem[]{
+  let templateFiles = [...completionCache.get(folder) || refreshCompletionsTask.performTask(), ...addonsCompletionCache.get(folder) || []];
+  if(currentWord.startsWith("{{#")){
+    return templateFiles.map((templateFile):CompletionItem => {
+      return {
+        label: `#${templateFile}`,
+        kind: CompletionItemKind.Class,
+        insertText: `#${templateFile}\}\}\n\{\{/${templateFile}`
+      };
+    });
+  }else if(currentWord.startsWith('{{')){
+    return templateFiles.map((templateFile):CompletionItem => {
+      return {
+        label: templateFile,
+        kind: CompletionItemKind.Class,
+      };
+    });
+  }
+  return [];
+}
+
+class ComponentPathProvider implements CompletionItemProvider {
+  provideCompletionItems(document: TextDocument, position: Position): CompletionItem[] {
+    let fileState = getFileState(document, position);
+    let folder = getCurrentWorkspaceFolder()!!;
+    let currentWord = fileState.currentWord();
+    if (fileState.matchCurrentLine("\{{2,2}[a-z]{3,6}") || fileState.matchCurrentLine("\{{2,2}\/") || fileState.matchCurrentLine("\{{2,2}\#")) {
+      return toCompletionItems(currentWord, folder);
+    }
+    return [];
+  }
 }
 
 const refreshAddonCompletionsTask = getTask(refreshAddonCompletionItems);

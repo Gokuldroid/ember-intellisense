@@ -1,5 +1,6 @@
 import { TextDocument, Position, workspace } from "vscode";
 import { dirname } from 'path';
+import * as _ from 'lodash';
 
 export class FileState {
   rootPath: string | undefined;
@@ -24,15 +25,21 @@ export class FileState {
     return this.textCurrentLine.match(pattern);
   }
 
-  matchCurrentWord(pattern: string) {
-    let currentWord = this.currentWord();
+  matchCurrentWord(pattern: string, wordPattern: RegExp, placeHolder: string) {
+    let currentWord = this.currentWord(wordPattern ,placeHolder);
     return currentWord.match(pattern);
   }
 
-  currentWord(): string {
-    //TODO : doesn't work as expected
-    let range = this.document.getWordRangeAtPosition(this.position);
-    return this.document.getText(range);
+  currentWord(regex: RegExp = /([\S]+LilyCompletionDummy[\S]+)/, placeHolder = 'LilyCompletionDummy'): string {
+    //TODO : doesn't work as expected need to revisit
+    let originalText = this.document.getText();
+    let cursorOffset = this.document.offsetAt(this.position);
+    let text = originalText.slice(0, cursorOffset) + placeHolder + originalText.slice(cursorOffset);
+    let match = text.match(regex);
+    if(_.isEmpty(match)){
+      return '';
+    }
+    return match!![0].replace(placeHolder,'');
   }
 }
 
