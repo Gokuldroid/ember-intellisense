@@ -9,7 +9,7 @@
     "vscode": "^1.33.0"
   },
   "categories": [
-    "Ember"
+    "Programming Languages"
   ],
   "activationEvents": [
     "*"
