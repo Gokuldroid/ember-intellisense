@@ -9,15 +9,12 @@ import { getCompletionItems } from './utils/js-parser';
 class HbsAutocompleteProvider implements CompletionItemProvider {
   provideCompletionItems(document: TextDocument, position: Position): CompletionItem[] {
     let fileState = getFileState(document, position);
-    if (fileState.matchCurrentWord("[a-z]+") || fileState.currentWord().endsWith("=")) {
-      let currentFolder = getCurrentWorkspaceFolder();
-      let currentFilePath = currentDocumentRelativePath();
-      let relatedFiles = findRelatedFiles(currentFolder, currentFilePath).filter((file: any) => {
-        return file.label === 'Component' || file.label === 'Controller';
-      }).map((file: any) => file.path);
-      return _.flatten(relatedFiles.map((file: string) => getCompletionItems(path.join(currentFolder!!, file))));
-    }
-    return [];
+    let currentFolder = getCurrentWorkspaceFolder();
+    let currentFilePath = currentDocumentRelativePath();
+    let relatedFiles = findRelatedFiles(currentFolder, currentFilePath).filter((file: any) => {
+      return file.label === 'Component' || file.label === 'Controller';
+    }).map((file: any) => file.path);
+    return _.flatten(relatedFiles.map((file: string) => getCompletionItems(path.join(currentFolder!!, file))));
   }
 }
 

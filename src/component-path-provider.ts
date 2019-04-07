@@ -1,73 +1,104 @@
 import { CompletionItemProvider, TextDocument, Position, CompletionItem, ExtensionContext, CompletionItemKind, languages, workspace } from "vscode";
-import * as globObject from 'glob';
 import { getFileState } from "./state/file";
-import * as Queue from "queue-promise";
 import { getCurrentWorkspaceFolder } from "./utils/editor";
 import * as path from 'path';
 import * as _ from 'lodash';
 import { getTask } from "./utils/single-task";
-
-
-const glob = function (pattern: string, options: Object) {
-  return new Promise<string[]>((resolve, reject) => {
-    globObject(pattern, options, (err: any, files: string[]) => {
-      err === null ? resolve(files) : reject(err)
-    });
-  });
-}
-
-const toCompletionItem = function (text: string): CompletionItem {
-  return new CompletionItem(
-    text,
-    CompletionItemKind.Module
-  );
-};
+import glob from "./utils/glob";
+import * as fs from "fs";
 
 class ComponentPathProvider implements CompletionItemProvider {
   provideCompletionItems(document: TextDocument, position: Position): CompletionItem[] {
     let fileState = getFileState(document, position);
     let folder = getCurrentWorkspaceFolder()!!;
-    if (fileState.matchCurrentLine("\{{2,2}[a-z]{3,6}") || fileState.matchCurrentLine("\{{2,2}\/")) {
-      return cache.get(folder) || (queue.refreshCache());
+    if (fileState.matchCurrentLine("\{{2,2}[a-z]{3,6}") || fileState.matchCurrentLine("\{{2,2}\/") || fileState.matchCurrentLine("\{{2,2}\#")) {
+      return [...completionCache.get(folder) || refreshCompletionsTask.performTask(), ...addonsCompletionCache.get(folder) || []];
     }
     return [];
   }
 }
 
-let cache: Map<string, CompletionItem[]> = new Map();
+let completionCache: Map<string, CompletionItem[]> = new Map();
+
+async function getTemplateFiles(folder: string): Promise<string[]> {
+  //normal app templates
+  let podTemplatesFolder = path.join(folder, 'app', 'components');
+  let podFiles = await glob('**/*.hbs', { cwd: podTemplatesFolder });
+  let templatesFolder = path.join(folder, 'app', 'templates', 'components');
+  let templateFiles = await glob('**/*.hbs', { cwd: templatesFolder });
+
+  //addon templates
+  let addonPodTemplatesFolder = path.join(folder, 'addon', 'components');
+  let addonPodFiles = await glob('**/*.hbs', { cwd: addonPodTemplatesFolder });
+  let addonTemplatesFolder = path.join(folder, 'addon', 'templates', 'components');
+  let addonTemplateFiles = await glob('**/*.hbs', { cwd: addonTemplatesFolder });
+  
+  let allTemplateFiles = [...podFiles, ...templateFiles, ...addonPodFiles, ...addonTemplateFiles].map((file) => {
+    return file.replace('/template.hbs', '').replace('.hbs', '');
+  });
+  return _.uniq(allTemplateFiles);
+}
 
 async function refreshCompletionItems() {
   let currentFolder = getCurrentWorkspaceFolder();
   if (!currentFolder) {
     return;
   }
-  let podTemplatesFolder = path.join(currentFolder, 'app', 'components');
-  let podFiles = await glob('**/*.hbs', { cwd: podTemplatesFolder });
-  let templatesFolder = path.join(currentFolder, 'app', 'templates');
-  let templateFiles = await glob('**/*.hbs', { cwd: templatesFolder });
-  let allTemplateFiles = [...podFiles, ...templateFiles];
-  let items = _.uniq(allTemplateFiles).map((file: string) => {
-    return toCompletionItem(file.replace('/template.hbs', '').replace('.hbs', ''));
+  let allTemplateFiles = await getTemplateFiles(currentFolder);
+  let items = allTemplateFiles.map((file: string) => {
+    return new CompletionItem(file, CompletionItemKind.Module);
   });
-  console.log(`cache refreshed :: ${currentFolder} , size:: ${items.length}`);
-  cache.set(currentFolder, items);
+  console.log(`completionCache refreshed :: ${currentFolder} , size:: ${items.length}`);
+  completionCache.set(currentFolder, items);
 }
 
+const refreshCompletionsTask = getTask(refreshCompletionItems);
 
-const queue = getTask(refreshCompletionItems);
+let addonsCompletionCache: Map<string, CompletionItem[]> = new Map();
+
+async function refreshAddonCompletionItems() {
+  let currentFolder = getCurrentWorkspaceFolder();
+  if (!currentFolder) {
+    return;
+  }
+
+  let packageJson: any = JSON.parse(fs.readFileSync(path.join(currentFolder, 'package.json')).toString());
+  let devDependencies = packageJson.devDependencies;
+  if (_.isEmpty(devDependencies)) {
+    return;
+  }
+
+  let addonTempates: string[] = [];
+  for (const [key, _] of Object.entries(devDependencies)) {
+    let templates = await getTemplateFiles(path.join(currentFolder!!, 'node_modules', key));
+    addonTempates = [...addonTempates, ...templates];
+  }
+
+  let items = addonTempates.map((file: string) => {
+    let completionItem = new CompletionItem(file, CompletionItemKind.Module);
+    return completionItem;
+  });
+  console.log(`addon completionCache refreshed :: ${currentFolder} , size:: ${items.length}`);
+  addonsCompletionCache.set(currentFolder, items);
+}
+
+const refreshAddonCompletionsTask = getTask(refreshAddonCompletionItems);
+
+
 
 function registerFileWatcher(context: ExtensionContext) {
-  queue.performTask();
+  refreshCompletionsTask.performTask();
+  refreshAddonCompletionsTask.performTask();
   let fileSystemWatcher = workspace.createFileSystemWatcher(`${getCurrentWorkspaceFolder()}/**/*.hbs`);
   fileSystemWatcher.onDidChange((filePath) => {
-    console.log('file changed ::' + filePath);
-    queue.performTask();
+    console.log(`file changed :: ${filePath}`);
+    refreshCompletionsTask.performTask();
   });
   context.subscriptions.push(fileSystemWatcher);
 }
 
 function registerHbsProvider(context: ExtensionContext) {
-  const triggers = ['{', '/'];
+  const triggers = ['{', '/','#'];
   const componentPathProvider = new ComponentPathProvider();
   let completionProvider = languages.registerCompletionItemProvider({ scheme: "file", language: "handlebars" }, componentPathProvider, ...triggers);
   context.subscriptions.push(completionProvider);
