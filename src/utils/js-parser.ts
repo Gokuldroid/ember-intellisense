@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as parser from '@babel/parser';
 import * as types from '@babel/types';
 import traverse from '@babel/traverse';
+import * as _ from 'lodash';
 
 export function parseJs(file: string): types.File {
   let content = fs.readFileSync(file).toString();
@@ -23,7 +24,7 @@ export function getProperties(file: string): string[] {
       }
     }
   });
-  return attributes;
+  return _.uniq(attributes);
 }
 
 const toCompletionItem = function (text: string): vscode.CompletionItem {
