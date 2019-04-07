@@ -10,6 +10,7 @@ export class FileState {
   cursorLine: number;
   document: TextDocument;
   position: Position;
+  cursorOffset:number;
 
   constructor(document: TextDocument, position: Position) {
     this.document = document;
@@ -19,27 +20,34 @@ export class FileState {
     this.textCurrentLine = document.lineAt(position).text;
     this.currentChar = position.character;
     this.cursorLine = position.line;
+    this.cursorOffset = this.document.offsetAt(this.position);
   }
 
   matchCurrentLine(pattern: string) {
     return this.textCurrentLine.match(pattern);
   }
 
-  matchCurrentWord(pattern: string, wordPattern: RegExp, placeHolder: string) {
+  matchCurrentWord(pattern: string, wordPattern: RegExp = /([\S]+LilyCompletionDummy[\S]*)/, placeHolder: string = 'LilyCompletionDummy') {
     let currentWord = this.currentWord(wordPattern ,placeHolder);
     return currentWord.match(pattern);
   }
 
   currentWord(regex: RegExp = /([\S]+LilyCompletionDummy[\S]*)/, placeHolder = 'LilyCompletionDummy'): string {
     //TODO : doesn't work as expected need to revisit
-    let originalText = this.document.getText();
-    let cursorOffset = this.document.offsetAt(this.position);
-    let text = originalText.slice(0, cursorOffset) + placeHolder + originalText.slice(cursorOffset);
+    let text = this.cursorLeftText() + placeHolder + this.cursorRightText();
     let match = text.match(regex);
     if(_.isEmpty(match)){
       return '';
     }
     return match!![0].replace(placeHolder,'');
+  }
+
+  cursorLeftText(){
+    return this.document.getText().slice(0, this.cursorOffset);
+  }
+
+  cursorRightText(){
+    return this.document.getText().slice(this.cursorOffset);
   }
 }
 

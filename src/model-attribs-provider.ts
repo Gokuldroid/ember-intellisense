@@ -9,27 +9,28 @@ import * as changeCase from 'change-case';
 import { getProperties } from './utils/js-parser';
 import * as _ from 'lodash';
 
-function canAutoComplete(currentWord: string): boolean {
-  return /{{[a-zA-Z]{2,6}}}/.test(currentWord) || currentWord.endsWith('.') || /=[a-zA-Z]{1,5}/.test(currentWord);
+function canAutoComplete(leftText: string): boolean {
+  return /([a-zA-Z=.]{2})$/.test(leftText);
 }
 
 class ModelAttribsProvider implements CompletionItemProvider {
   provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.ProviderResult<vscode.CompletionItem[] | vscode.CompletionList> {
     let filestate = getFileState(document, position);
     let currentWord = filestate.currentWord();
-    if (!canAutoComplete(currentWord)) {
+    let leftText = filestate.cursorLeftText();
+    if (!canAutoComplete(leftText)) {
       return;
     }
 
     let completionItems: vscode.CompletionItem[] = [];
-    if (currentWord.includes('=') && !currentWord.includes('.')) {
+    if (leftText.endsWith('=')) {
 
       for (const [key, _] of modelVsAttribs.entries()) {
         completionItems.push({ label: changeCase.camelCase(key), kind: vscode.CompletionItemKind.Variable });
       }
       return completionItems;
-    } else if (currentWord.endsWith('.')) {
-      let matches = /(?<gokul>[a-zA-Z]*\.)$/.exec(currentWord);
+    } else if (leftText.endsWith('.')) {
+      let matches = /(?<gokul>[a-zA-Z]*\.)$/.exec(leftText);
       if (_.isEmpty(matches)) {
         return [];
       }

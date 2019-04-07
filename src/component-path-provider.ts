@@ -4,8 +4,6 @@ import { getCurrentWorkspaceFolder } from "./utils/editor";
 import * as path from 'path';
 import * as _ from 'lodash';
 import { getTask } from "./utils/single-task";
-import glob from "./utils/glob";
-import * as fs from "fs";
 import { getTemplateFiles, getPackageJson } from "./utils/dir-structure";
 
 let completionCache: Map<string, string[]> = new Map();
@@ -75,12 +73,16 @@ function toCompletionItems(currentWord:string, folder:string): CompletionItem[]{
   return [];
 }
 
+function canComplete(currentWord: string) : boolean{
+  return /(^(({{)|({{\/)|({{#))[a-z\/]{3,10}\}{0,2})$/.test(currentWord);
+}
+
 class ComponentPathProvider implements CompletionItemProvider {
   provideCompletionItems(document: TextDocument, position: Position): CompletionItem[] {
     let fileState = getFileState(document, position);
     let folder = getCurrentWorkspaceFolder()!!;
     let currentWord = fileState.currentWord();
-    if (fileState.matchCurrentLine("\{{2,2}[a-z]{3,6}") || fileState.matchCurrentLine("\{{2,2}\/") || fileState.matchCurrentLine("\{{2,2}\#")) {
+    if (canComplete(currentWord)) {
       return toCompletionItems(currentWord, folder);
     }
     return [];
