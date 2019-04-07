@@ -6,26 +6,16 @@ import * as _ from 'lodash';
 import { getTask } from "./utils/single-task";
 import glob from "./utils/glob";
 import * as fs from "fs";
+import { getTemplateFiles, getPackageJson } from "./utils/dir-structure";
 
 let completionCache: Map<string, string[]> = new Map();
 
-async function getTemplateFiles(folder: string): Promise<string[]> {
-  //normal app templates
-  let podTemplatesFolder = path.join(folder, 'app', 'components');
-  let podFiles = await glob('**/*.hbs', { cwd: podTemplatesFolder });
-  let templatesFolder = path.join(folder, 'app', 'templates', 'components');
-  let templateFiles = await glob('**/*.hbs', { cwd: templatesFolder });
-
-  //addon templates
-  let addonPodTemplatesFolder = path.join(folder, 'addon', 'components');
-  let addonPodFiles = await glob('**/*.hbs', { cwd: addonPodTemplatesFolder });
-  let addonTemplatesFolder = path.join(folder, 'addon', 'templates', 'components');
-  let addonTemplateFiles = await glob('**/*.hbs', { cwd: addonTemplatesFolder });
-  
-  let allTemplateFiles = [...podFiles, ...templateFiles, ...addonPodFiles, ...addonTemplateFiles].map((file) => {
+async function getTemplateFileNames(folder: string): Promise<string[]> {
+  let templateFiles = await getTemplateFiles(folder);
+  let strippedTemplateFiles = templateFiles.map((file) => {
     return file.replace('/template.hbs', '').replace('.hbs', '');
   });
-  return _.uniq(allTemplateFiles);
+  return _.uniq(strippedTemplateFiles);
 }
 
 async function refreshCompletionItems() {
@@ -33,7 +23,7 @@ async function refreshCompletionItems() {
   if (!currentFolder) {
     return;
   }
-  let allTemplateFiles = await getTemplateFiles(currentFolder);
+  let allTemplateFiles = await getTemplateFileNames(currentFolder);
   console.log(`completionCache refreshed :: ${currentFolder} , size:: ${allTemplateFiles.length}`);
   completionCache.set(currentFolder, allTemplateFiles);
 }
@@ -48,15 +38,15 @@ async function refreshAddonCompletionItems() {
     return;
   }
 
-  let packageJson: any = JSON.parse(fs.readFileSync(path.join(currentFolder, 'package.json')).toString());
+  let packageJson: any = getPackageJson(currentFolder);
   let devDependencies = packageJson.devDependencies;
   if (_.isEmpty(devDependencies)) {
     return;
   }
 
   let addonTempates: string[] = [];
-  for (const [key, _] of Object.entries(devDependencies)) {
-    let templates = await getTemplateFiles(path.join(currentFolder!!, 'node_modules', key));
+  for (const [key] of Object.entries(devDependencies)) {
+    let templates = await getTemplateFileNames(path.join(currentFolder!!, 'node_modules', key));
     addonTempates = [...addonTempates, ...templates];
   }
   console.log(`addon completionCache refreshed :: ${currentFolder} , size:: ${addonTempates.length}`);
