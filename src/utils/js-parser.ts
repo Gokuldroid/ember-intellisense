@@ -12,6 +12,20 @@ export function parseJs(file: string): types.File {
   });
 }
 
+export function getProperties(file: string): string[] {
+  let ast = parseJs(file);
+  let attributes: string[] = [];
+  traverse(ast, {
+    enter(path: any) {
+      let node = path.node;
+      if (types.isProperty(node)) {
+        attributes.push(node.key.name);
+      }
+    }
+  });
+  return attributes;
+}
+
 const toCompletionItem = function (text: string): vscode.CompletionItem {
   return new vscode.CompletionItem(
     text,
@@ -20,15 +34,7 @@ const toCompletionItem = function (text: string): vscode.CompletionItem {
 };
 
 export function getCompletionItems(file: string): vscode.CompletionItem[] {
-  let ast = parseJs(file);
-  let items: vscode.CompletionItem[] = [];
-  traverse(ast, {
-    enter(path: any){
-      let node = path.node;
-      if(types.isProperty(node)){
-        items.push(toCompletionItem(node.key.name));
-      }
-    }
+  return getProperties(file).map((attribute: string): vscode.CompletionItem => {
+    return toCompletionItem(attribute);
   });
-  return items;
 }

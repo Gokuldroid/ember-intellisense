@@ -4,12 +4,14 @@ import * as vscode from 'vscode';
 import ComponentPathProvider from './component-path-provider';
 import HbsAutocompleteProvider from './hbs-autocomplete-provider';
 import HbsGotoDefProvider from './hbs-go-to-def-provider';
+import ModelAttribsProvider from './model-attribs-provider';
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 	ComponentPathProvider(context);
 	HbsAutocompleteProvider(context);
 	HbsGotoDefProvider(context);
+	ModelAttribsProvider(context);
 }
 
 // this method is called when your extension is deactivated

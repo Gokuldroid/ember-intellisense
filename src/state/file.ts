@@ -30,7 +30,7 @@ export class FileState {
     return currentWord.match(pattern);
   }
 
-  currentWord(regex: RegExp = /([\S]+LilyCompletionDummy[\S]+)/, placeHolder = 'LilyCompletionDummy'): string {
+  currentWord(regex: RegExp = /([\S]+LilyCompletionDummy[\S]*)/, placeHolder = 'LilyCompletionDummy'): string {
     //TODO : doesn't work as expected need to revisit
     let originalText = this.document.getText();
     let cursorOffset = this.document.offsetAt(this.position);
