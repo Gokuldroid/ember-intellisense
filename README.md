@@ -6,14 +6,18 @@ Basic autocompletion for 'ember' projects
 
 ## Features
 
-##### Goto definition for components [demo](demos/goto-def.mp4).
+##### Goto definition for components 
+![demo](demos/goto-def.gif).
 
 
-##### Autocompletion of variables in component handlebars [demo](demos/attrib-completion.mp4).
+##### Autocompletion of variables in component handlebars 
+![demo](demos/attrib-completion.gif).
 
-##### Autocompletion of component path in handlebars [demo](demos/path-completion.mp4).
+##### Autocompletion of component path in handlebars 
+![demo](demos/path-completion.gif).
 
-##### Autocompletion of model attributes [demo](demos/model-completion.mp4).
+##### Autocompletion of model attributes 
+![demo](demos/model-completion.gif).
 
 
 ## Installation
