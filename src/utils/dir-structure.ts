@@ -7,11 +7,11 @@ export function getComponentFolders(rootDir: string): string[] {
   //Ember app
   let podTemplatesFolder = path.join(rootDir, 'app', 'components');
   let templatesFolder = path.join(rootDir, 'app', 'templates', 'components');
-  
+
   //Addons
   let addonPodTemplatesFolder = path.join(rootDir, 'addon', 'components');
   let addonTemplatesFolder = path.join(rootDir, 'addon', 'templates', 'components');
-  
+
   return [podTemplatesFolder, templatesFolder, addonPodTemplatesFolder, addonTemplatesFolder];
 }
 
@@ -43,8 +43,19 @@ export function getPackageJson(rootDir: string): any {
  * @param rootDir Ember root directory
  * @returns array of relative action handler files relative paths to the given directory
  */
-export function getActionHandlers(currentFolder: string, templateFile:string): string[]{
-  return findRelatedFiles(currentFolder, templateFile).filter((file: any) => {
+export function getActionHandlers(rootDir: string, templateFile: string): string[] {
+  return findRelatedFiles(rootDir, templateFile).filter((file: any) => {
     return file.label === 'Component' || file.label === 'Controller';
   }).map((file: any) => file.path);
+}
+
+/**
+ * returns all model files in the given directory
+ * @param rootDir Ember root directory 
+ * @returns array of ember model files
+ */
+export async function getModelFiles(rootDir: string): Promise<string[]> {
+  let modelFolder = path.join(rootDir, 'app', 'models');
+  let modelfiles = await glob('**/*.js', { cwd: modelFolder });
+  return modelfiles.map((file) => path.join('app', 'models', file));
 }

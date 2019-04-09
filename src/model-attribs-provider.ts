@@ -8,6 +8,7 @@ import * as path from 'path';
 import * as changeCase from 'change-case';
 import { getProperties } from './utils/js-parser';
 import * as _ from 'lodash';
+import { getModelFiles } from './utils/dir-structure';
 
 function canAutoComplete(leftText: string): boolean {
   return /([a-zA-Z=.]{2})$/.test(leftText);
@@ -59,11 +60,10 @@ async function refreshModelCompletionItems() {
     return;
   }
   modelVsAttribs.clear();
-  let modelFolder = path.join(currentFolder, 'app', 'models');
-  let modelFiles = await glob('**/*.js', { cwd: modelFolder });
+  let modelFiles = await getModelFiles(currentFolder);
   for (const file of modelFiles) {
     let fileName = file.split('/').pop()!!.replace('.js', '');
-    let properties = getProperties(path.join(modelFolder, file));
+    let properties = getProperties(file);
     modelVsAttribs.set(changeCase.camelCase(fileName), properties);
   }
   console.log(`model completion cache refreshed :: ${modelFiles.length}`);
