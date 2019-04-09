@@ -13,18 +13,21 @@ export function parseJs(file: string): types.File {
   });
 }
 
-export function getPropertyNodes(file: string): any[] {
+function filterNodes(file: string,func: (path: any) => boolean): any[] {
   let ast = parseJs(file);
-  let nodes: any[] = [];
+  let result:any = [];
   traverse(ast, {
     enter(path: any) {
-      let node = path.node;
-      if (types.isProperty(node)) {
-        nodes.push(node);
+      if(func(path.node)){
+        result.push(path.node);
       }
     }
   });
-  return nodes;
+  return result;
+}
+
+export function getPropertyNodes(file: string): any[] {
+  return filterNodes(file, types.isProperty);
 }
 
 export function getProperties(file: string): string[] {
@@ -45,19 +48,7 @@ export function getCompletionItems(file: string): vscode.CompletionItem[] {
 }
 
 export function getActionNodes(file: string): any[]{
-  let ast = parseJs(file);
-  let nodes: any[] = [];
-  traverse(ast, {
-    enter(path: any) {
-      let node = path.node;
-      if (types.isProperty(node) && types.isIdentifier(node.key) && node.key.name === 'actions') {
-        let actions: any = node.value;
-        if(actions && actions.properties){
-          nodes = [...nodes, ...actions.properties];
-        }
-      }
-    }
-  });
-  return nodes;
+  let actionFilter = (node:any) => types.isProperty(node) && types.isIdentifier(node.key) && node.key.name === 'actions' && _.has(node, 'value.properties');
+  return _.flatten(filterNodes(file, actionFilter).map((node) => node.value.properties));
 }
 

@@ -1,26 +1,26 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-export function currentDocument(): vscode.TextDocument | null {
+export function currentDocument(): vscode.TextDocument | undefined {
   let activeEditor = vscode.window.activeTextEditor;
   if (!activeEditor) {
-    return null;
+    return undefined;
   }
   return activeEditor.document;
 }
 
 
-export function currentDocumentRelativePath(): string | null {
+export function currentDocumentRelativePath(): string | undefined {
   if (currentDocument()) {
     return vscode.workspace.asRelativePath(currentDocument()!.uri);
   }
-  return null;
+  return undefined;
 }
 
-export function currentDocumentFolder(): string | null {
+export function currentDocumentFolder(): string | undefined {
   let doc = currentDocument();
   if (!doc) {
-    return null;
+    return undefined;
   }
   return path.dirname(vscode.workspace.asRelativePath(doc.fileName, false));
 }
