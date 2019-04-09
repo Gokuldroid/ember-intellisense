@@ -1,6 +1,7 @@
 import * as path from 'path';
 import glob from './glob';
 import * as fs from 'fs';
+import { findRelatedFiles } from 'ember-find-related-files';
 
 export function getComponentFolders(rootDir: string): string[] {
   //Ember app
@@ -14,7 +15,11 @@ export function getComponentFolders(rootDir: string): string[] {
   return [podTemplatesFolder, templatesFolder, addonPodTemplatesFolder, addonTemplatesFolder];
 }
 
-
+/**
+ * Gets all template files in the given directory
+ * @param rootDir Ember root directory
+ * @returns array of relative template files relative paths to the given directory
+ */
 export async function getTemplateFiles(rootDir: string): Promise<string[]> {
   let result: string[] = [];
   for (const folder of getComponentFolders(rootDir)) {
@@ -25,4 +30,14 @@ export async function getTemplateFiles(rootDir: string): Promise<string[]> {
 
 export function getPackageJson(rootDir: string): any {
   return JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json')).toString());
+}
+/**
+ * Gets all action handlers of the template file
+ * @param rootDir Ember root directory
+ * @returns array of relative action handler files relative paths to the given directory
+ */
+export function getActionHandlers(currentFolder: string, templateFile:string): string[]{
+  return findRelatedFiles(currentFolder, templateFile).filter((file: any) => {
+    return file.label === 'Component' || file.label === 'Controller';
+  }).map((file: any) => file.path);
 }

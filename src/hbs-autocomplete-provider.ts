@@ -5,15 +5,13 @@ import { CompletionItem, CompletionItemProvider, ExtensionContext, languages, Po
 import { getFileState } from "./state/file";
 import { currentDocumentRelativePath, getCurrentWorkspaceFolder } from "./utils/editor";
 import { getCompletionItems } from './utils/js-parser';
+import { getActionHandlers } from './utils/dir-structure';
 
 class HbsAutocompleteProvider implements CompletionItemProvider {
   provideCompletionItems(document: TextDocument, position: Position): CompletionItem[] {
-    let fileState = getFileState(document, position);
     let currentFolder = getCurrentWorkspaceFolder();
     let currentFilePath = currentDocumentRelativePath();
-    let relatedFiles = findRelatedFiles(currentFolder, currentFilePath).filter((file: any) => {
-      return file.label === 'Component' || file.label === 'Controller';
-    }).map((file: any) => file.path);
+    let relatedFiles = getActionHandlers(currentFolder!!, currentFilePath!!);
     return _.flatten(relatedFiles.map((file: string) => getCompletionItems(path.join(currentFolder!!, file))));
   }
 }

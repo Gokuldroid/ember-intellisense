@@ -13,18 +13,22 @@ export function parseJs(file: string): types.File {
   });
 }
 
-export function getProperties(file: string): string[] {
+export function getPropertyNodes(file: string): any[] {
   let ast = parseJs(file);
-  let attributes: string[] = [];
+  let nodes: any[] = [];
   traverse(ast, {
     enter(path: any) {
       let node = path.node;
       if (types.isProperty(node)) {
-        attributes.push(node.key.name);
+        nodes.push(node);
       }
     }
   });
-  return _.uniq(attributes);
+  return nodes;
+}
+
+export function getProperties(file: string): string[] {
+  return _.uniq(getPropertyNodes(file).map((node) => node.key.name));
 }
 
 const toCompletionItem = function (text: string): vscode.CompletionItem {
@@ -39,3 +43,21 @@ export function getCompletionItems(file: string): vscode.CompletionItem[] {
     return toCompletionItem(attribute);
   });
 }
+
+export function getActionNodes(file: string): any[]{
+  let ast = parseJs(file);
+  let nodes: any[] = [];
+  traverse(ast, {
+    enter(path: any) {
+      let node = path.node;
+      if (types.isProperty(node) && types.isIdentifier(node.key) && node.key.name === 'actions') {
+        let actions: any = node.value;
+        if(actions && actions.properties){
+          nodes = [...nodes, ...actions.properties];
+        }
+      }
+    }
+  });
+  return nodes;
+}
+
