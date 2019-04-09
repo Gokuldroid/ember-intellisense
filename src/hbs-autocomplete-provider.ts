@@ -2,9 +2,8 @@ import { findRelatedFiles } from 'ember-find-related-files';
 import * as _ from 'lodash';
 import * as path from 'path';
 import { CompletionItem, CompletionItemProvider, ExtensionContext, languages, Position, TextDocument } from "vscode";
-import { getFileState } from "./state/file";
 import { currentDocumentRelativePath, currentWorkspaceFolder } from "./utils/editor";
-import { getCompletionItems } from './utils/js-parser';
+import { getPropertyCompletions } from './utils/js-parser';
 import { getActionHandlers } from './utils/dir-structure';
 
 class HbsAutocompleteProvider implements CompletionItemProvider {
@@ -12,7 +11,7 @@ class HbsAutocompleteProvider implements CompletionItemProvider {
     let currentFolder = currentWorkspaceFolder();
     let currentFilePath = currentDocumentRelativePath();
     let relatedFiles = getActionHandlers(currentFolder!!, currentFilePath!!);
-    return _.flatten(relatedFiles.map((file: string) => getCompletionItems(path.join(currentFolder!!, file))));
+    return _.flatten(relatedFiles.map((file: string) => getPropertyCompletions(path.join(currentFolder!!, file))));
   }
 }
 
