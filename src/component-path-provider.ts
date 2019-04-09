@@ -1,6 +1,6 @@
 import { CompletionItemProvider, TextDocument, Position, CompletionItem, ExtensionContext, CompletionItemKind, languages, workspace } from "vscode";
 import { getFileState } from "./state/file";
-import { getCurrentWorkspaceFolder } from "./utils/editor";
+import { currentWorkspaceFolder } from "./utils/editor";
 import * as path from 'path';
 import * as _ from 'lodash';
 import { getTask } from "./utils/single-task";
@@ -17,7 +17,7 @@ async function getTemplateFileNames(folder: string): Promise<string[]> {
 }
 
 async function refreshCompletionItems() {
-  let currentFolder = getCurrentWorkspaceFolder();
+  let currentFolder = currentWorkspaceFolder();
   if (!currentFolder) {
     return;
   }
@@ -31,7 +31,7 @@ const refreshCompletionsTask = getTask(refreshCompletionItems);
 let addonsCompletionCache: Map<string, string[]> = new Map();
 
 async function refreshAddonCompletionItems() {
-  let currentFolder = getCurrentWorkspaceFolder();
+  let currentFolder = currentWorkspaceFolder();
   if (!currentFolder) {
     return;
   }
@@ -80,7 +80,7 @@ function canComplete(currentWord: string) : boolean{
 class ComponentPathProvider implements CompletionItemProvider {
   provideCompletionItems(document: TextDocument, position: Position): CompletionItem[] {
     let fileState = getFileState(document, position);
-    let folder = getCurrentWorkspaceFolder()!!;
+    let folder = currentWorkspaceFolder()!!;
     let currentWord = fileState.currentWord();
     if (canComplete(currentWord)) {
       return toCompletionItems(currentWord, folder);
@@ -96,7 +96,7 @@ const refreshAddonCompletionsTask = getTask(refreshAddonCompletionItems);
 function registerFileWatcher(context: ExtensionContext) {
   refreshCompletionsTask.performTask();
   refreshAddonCompletionsTask.performTask();
-  let fileSystemWatcher = workspace.createFileSystemWatcher(`${getCurrentWorkspaceFolder()}/**/*.hbs`);
+  let fileSystemWatcher = workspace.createFileSystemWatcher(`${currentWorkspaceFolder()}/**/*.hbs`);
   fileSystemWatcher.onDidChange((filePath) => {
     console.log(`file changed :: ${filePath}`);
     refreshCompletionsTask.performTask();

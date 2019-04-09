@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getFileState, FileState } from './state/file';
-import { getCurrentWorkspaceFolder, currentDocumentRelativePath } from './utils/editor';
+import { currentWorkspaceFolder, currentDocumentRelativePath } from './utils/editor';
 import { getComponentFolders, getActionHandlers } from './utils/dir-structure';
 import glob from './utils/glob';
 import * as path from 'path';
@@ -35,7 +35,7 @@ async function getRelatedFiles(filestate: FileState, currentFolder: string): Pro
 }
 
 async function getComponentDefinition(filestate: FileState): Promise<vscode.Location[]> {
-  let relatedFiles = await getRelatedFiles(filestate, getCurrentWorkspaceFolder()!!);
+  let relatedFiles = await getRelatedFiles(filestate, currentWorkspaceFolder()!!);
   return relatedFiles.map((file) => {
     return new vscode.Location(vscode.Uri.file(file), new vscode.Range(0, 0, 0, 0));
   });
@@ -50,7 +50,7 @@ function isAction(filestate: FileState): boolean {
 }
 
 async function getActionDefinition(filestate: FileState): Promise<vscode.Location[]> {
-  let currentFolder = getCurrentWorkspaceFolder()!!;
+  let currentFolder = currentWorkspaceFolder()!!;
   let actionHanlers = getActionHandlers(currentFolder, currentDocumentRelativePath()!!);
   let currentWord = filestate.currentWord(/([a-zA-Z]+LilyCompletionDummy[a-zA-Z]*)/);
   return _.flatten(actionHanlers.map((file) => {

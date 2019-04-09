@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { CompletionItemProvider } from 'vscode';
 import { getFileState } from './state/file';
-import { getCurrentWorkspaceFolder } from './utils/editor';
+import { currentWorkspaceFolder } from './utils/editor';
 import { getTask } from './utils/single-task';
 import glob from './utils/glob';
 import * as path from 'path';
@@ -54,7 +54,7 @@ class ModelAttribsProvider implements CompletionItemProvider {
 const modelVsAttribs: Map<string, string[]> = new Map();
 
 async function refreshModelCompletionItems() {
-  let currentFolder = getCurrentWorkspaceFolder();
+  let currentFolder = currentWorkspaceFolder();
   if (!currentFolder) {
     return;
   }
@@ -73,7 +73,7 @@ const refreshModelCompletionsTask = getTask(refreshModelCompletionItems);
 
 function registerFileWatcher(context: vscode.ExtensionContext) {
   refreshModelCompletionsTask.performTask();
-  let fileSystemWatcher = vscode.workspace.createFileSystemWatcher(`${getCurrentWorkspaceFolder()}/app/models/**/*.js`);
+  let fileSystemWatcher = vscode.workspace.createFileSystemWatcher(`${currentWorkspaceFolder()}/app/models/**/*.js`);
   fileSystemWatcher.onDidChange((filePath) => {
     console.log(`file changed :: ${filePath}`);
     refreshModelCompletionsTask.performTask();

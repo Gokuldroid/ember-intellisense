@@ -28,9 +28,16 @@ export async function getTemplateFiles(rootDir: string): Promise<string[]> {
   return result;
 }
 
+/**
+ * Reads the package.json in the given folder
+ * @param rootDir Ember root directory
+ * @returns json object
+ */
 export function getPackageJson(rootDir: string): any {
   return JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json')).toString());
 }
+
+
 /**
  * Gets all action handlers of the template file
  * @param rootDir Ember root directory

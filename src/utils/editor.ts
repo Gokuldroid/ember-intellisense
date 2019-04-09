@@ -26,7 +26,7 @@ export function currentDocumentFolder(): string | null {
 }
 
 
-export function getCurrentWorkspaceFolder(): string | undefined {
+export function currentWorkspaceFolder(): string | undefined {
   if (vscode.workspace.workspaceFolders) {
     if (currentDocument()) {
       const workspaceFolder = vscode.workspace.getWorkspaceFolder(currentDocument()!.uri);
