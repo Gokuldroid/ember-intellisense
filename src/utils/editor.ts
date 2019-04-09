@@ -25,7 +25,6 @@ export function currentDocumentFolder(): string | undefined {
   return path.dirname(vscode.workspace.asRelativePath(doc.fileName, false));
 }
 
-
 export function currentWorkspaceFolder(): string | undefined {
   if (vscode.workspace.workspaceFolders) {
     if (currentDocument()) {
